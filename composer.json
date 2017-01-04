@@ -1,0 +1,25 @@
+{
+    "name": "cap-collectif/id-to-uuid",
+    "description": "Easily migrate from auto incremented id to uuid",
+    "type": "library",
+    "autoload": {
+      "psr-4": {
+        "CapCollectif\\IdToUuid\\": "src/"
+      }
+    },
+    "require": {
+        "doctrine/orm": "^2.5",
+        "doctrine/dbal": "^2.5",
+        "doctrine/doctrine-migrations-bundle": "~1.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Aurélien David",
+            "email": "aurelien@cap-collectif.com"
+        }
+    ],
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^2.3"
+    }
+}
