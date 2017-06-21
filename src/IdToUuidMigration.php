@@ -35,6 +35,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     public function up(Schema $schema)
     {
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() != 'mysql', 'Migration can only be executed safely on \'mysql\'.');
     }
 
     public function migrate(string $tableName)
