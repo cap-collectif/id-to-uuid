@@ -1,6 +1,7 @@
 # id-to-uuid
 
 Easily migrate from an auto incremented integer id to a [uuid](https://en.wikipedia.org/wiki/Universally_unique_identifier) in a project using [DoctrineMigrationsBundle](https://github.com/doctrine/DoctrineMigrationsBundle).
+Autodetect your foreign keys and update them.
 
 ## Installation
 
