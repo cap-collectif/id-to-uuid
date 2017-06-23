@@ -25,6 +25,8 @@ composer require cap-collectif/id-to-uuid
 </entity>
 ```
 
+Alternatively you can use [uuid-dotrine](https://github.com/ramsey/uuid-doctrine) to add `uuid` type support.
+
 2. Add a new migration:
 
 ```php
