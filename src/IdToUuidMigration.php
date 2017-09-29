@@ -35,7 +35,6 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     public function up(Schema $schema)
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() != 'mysql', 'Migration can only be executed safely on \'mysql\'.');
     }
 
     public function migrate(string $tableName)
@@ -87,14 +86,10 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                       'tmpKey' => $key . '_to_uuid',
                       'nullable' => $this->isForeignKeyNullable($table, $key),
                       'name' => $foreignKey->getName(),
+                      'primaryKey' => $table->getPrimaryKeyColumns(),
                     ];
                     if ($foreignKey->onDelete()) {
                         $fk['onDelete'] = $foreignKey->onDelete();
-                    }
-                    if (in_array($key, $table->getPrimaryKeyColumns(), true)) {
-                        // if the foreign key is present in the primary key
-                        // we must also remove temporary the primary key
-                        $fk['primaryKey'] = $table->getPrimaryKeyColumns();
                     }
                     $this->fks[] = $fk;
                 }
@@ -135,31 +130,27 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function addThoseUuidsToTablesWithFK()
     {
-        if (count($this->fks) === 0) {
+        if (0 === count($this->fks)) {
             return;
         }
         echo '-> Adding UUIDs to tables with foreign keys...' . PHP_EOL;
         foreach ($this->fks as $fk) {
-            $selectPk = isset($fk['primaryKey']) ? implode(',', $fk['primaryKey']) : 'id';
+            $selectPk = implode(',', $fk['primaryKey']);
             $fetchs = $this->connection->fetchAll('SELECT ' . $selectPk . ', ' . $fk['key'] . ' FROM ' . $fk['table']);
             if (count($fetchs) > 0) {
                 echo '  * Adding ' . count($fetchs) . ' UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...' . PHP_EOL;
                 foreach ($fetchs as $fetch) {
+                    // do something when the value of foreign key is not null
                     if ($fetch[$fk['key']]) {
-                        // do something when the value of foreign key is not null
-                    if (!isset($fk['primaryKey'])) {
-                        $queryPk = ['id' => $fetch['id']];
-                    } else {
                         $queryPk = array_flip($fk['primaryKey']);
                         foreach ($queryPk as $key => $value) {
                             $queryPk[$key] = $fetch[$key];
                         }
-                    }
                         $this->connection->update(
-                      $fk['table'],
-                      [$fk['tmpKey'] => $this->idToUuidMap[$fetch[$fk['key']]]],
-                      $queryPk
-                    );
+                          $fk['table'],
+                          [$fk['tmpKey'] => $this->idToUuidMap[$fetch[$fk['key']]]],
+                          $queryPk
+                        );
                     }
                 }
             }
