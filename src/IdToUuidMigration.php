@@ -39,7 +39,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     public function migrate(string $tableName)
     {
-        echo PHP_EOL . 'Migrating ' . $tableName . '.id to UUIDs...' . PHP_EOL;
+        $this->write('Migrating ' . $tableName . '.id to UUIDs...');
         $this->prepare($tableName);
         $this->addUuidFields();
         $this->generateUuidsToReplaceIds();
@@ -48,11 +48,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->renameNewFKsToPreviousNames();
         $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey();
         $this->restoreConstraintsAndIndexes();
-        echo 'Successfully migrated ' . $tableName . '.id to UUIDs!' . PHP_EOL . PHP_EOL;
-    }
-
-    public function postUp(Schema $schema)
-    {
+        $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
 
     public function down(Schema $schema)
@@ -96,14 +92,14 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
             }
         }
         if (count($this->fks) > 0) {
-            echo '-> Detected the following foreign keys :' . PHP_EOL;
+            $this->write('-> Detected the following foreign keys :');
             foreach ($this->fks as $fk) {
-                echo '  * ' . $fk['table'] . '.' . $fk['key'] . PHP_EOL;
+                $this->write('  * ' . $fk['table'] . '.' . $fk['key']);
             }
 
             return;
         }
-        echo '-> 0 foreign key detected.' . PHP_EOL;
+        $this->write('-> 0 foreign key detected.');
     }
 
     private function addUuidFields()
@@ -118,7 +114,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
         $fetchs = $this->connection->fetchAll('SELECT id from ' . $this->table);
         if (count($fetchs) > 0) {
-            echo '-> Generating ' . count($fetchs) . ' UUID(s)...' . PHP_EOL;
+            $this->write('-> Generating ' . count($fetchs) . ' UUID(s)...');
             foreach ($fetchs as $fetch) {
                 $id = $fetch['id'];
                 $uuid = $this->generator->generate($this->em, null);
@@ -133,12 +129,12 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         if (0 === count($this->fks)) {
             return;
         }
-        echo '-> Adding UUIDs to tables with foreign keys...' . PHP_EOL;
+        $this->write('-> Adding UUIDs to tables with foreign keys...');
         foreach ($this->fks as $fk) {
             $selectPk = implode(',', $fk['primaryKey']);
             $fetchs = $this->connection->fetchAll('SELECT ' . $selectPk . ', ' . $fk['key'] . ' FROM ' . $fk['table']);
             if (count($fetchs) > 0) {
-                echo '  * Adding ' . count($fetchs) . ' UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...' . PHP_EOL;
+                $this->write('  * Adding ' . count($fetchs) . ' UUIDs to "' . $fk['table'] . '.' . $fk['key'] . '"...');
                 foreach ($fetchs as $fetch) {
                     // do something when the value of foreign key is not null
                     if ($fetch[$fk['key']]) {
@@ -159,7 +155,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function deletePreviousFKs()
     {
-        echo '-> Deleting previous id foreign keys...' . PHP_EOL;
+        $this->write('-> Deleting previous id foreign keys...');
         foreach ($this->fks as $fk) {
             if (isset($fk['primaryKey'])) {
                 try {
@@ -175,7 +171,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function renameNewFKsToPreviousNames()
     {
-        echo '-> Renaming temporary uuid foreign keys to previous foreign keys names...' . PHP_EOL;
+        $this->write('-> Renaming temporary uuid foreign keys to previous foreign keys names...');
         foreach ($this->fks as $fk) {
             $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' CHANGE ' . $fk['tmpKey'] . ' ' . $fk['key'] . ' CHAR(36) ' . ($fk['nullable'] ? '' : 'NOT NULL ') . 'COMMENT \'(DC2Type:guid)\'');
         }
@@ -183,7 +179,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
 
     private function dropIdPrimaryKeyAndSetUuidToPrimaryKey()
     {
-        echo '-> Creating the uuid primary key...' . PHP_EOL;
+        $this->write('-> Creating the uuid primary key...');
         $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' DROP PRIMARY KEY, DROP COLUMN id');
         $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' CHANGE uuid id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\'');
         $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' ADD PRIMARY KEY (id)');
