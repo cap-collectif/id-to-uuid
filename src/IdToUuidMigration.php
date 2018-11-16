@@ -11,7 +11,7 @@
 
 namespace CapCollectif\IdToUuid;
 
-use Doctrine\DBAL\Migrations\AbstractMigration;
+use Doctrine\Migrations\AbstractMigration;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\ORM\Id\UuidGenerator;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
