@@ -12,6 +12,9 @@
         "doctrine/dbal": "^2.5",
         "doctrine/doctrine-migrations-bundle": "~1.1"
     },
+    "suggest": {
+        "ramsey/uuid": "*"
+    },
     "license": "MIT",
     "authors": [
         {
