@@ -10,7 +10,7 @@
     "require": {
         "doctrine/orm": "^2.5",
         "doctrine/dbal": "^2.5",
-        "doctrine/doctrine-migrations-bundle": "~1.1"
+        "doctrine/doctrine-migrations-bundle": "~1.1 | ~2"
     },
     "suggest": {
         "ramsey/uuid": "*"

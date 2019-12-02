@@ -50,7 +50,7 @@ class PostgresIdToUuidMigration extends AbstractMigration
         $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
 
-    public function down(Schema $schema)
+    public function down(Schema $schema):void
     {
     }
 
