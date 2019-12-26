@@ -45,7 +45,7 @@ use CapCollectif\IdToUuid\IdToUuidMigration;
 
 class VersionXYZ extends IdToUuidMigration //or PostgresIdToUuidMigration
 {
-    public function postUp(Schema $schema)
+    public function postUp(Schema $schema): void
     {
         $this->migrate('user');
     }

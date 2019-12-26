@@ -32,7 +32,7 @@ class PostgresIdToUuidMigration extends AbstractMigration
     /** @var string */
     private $table;
 
-    public function up(Schema $schema)
+    public function up(Schema $schema): void
     {
     }
 
