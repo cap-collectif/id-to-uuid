@@ -36,16 +36,16 @@ class PostgresIdToUuidMigration extends AbstractMigration
     {
     }
 
-    public function migrate(string $tableName, string $tmpUuidField = '__uuid__'): void
+    public function migrate(string $tableName, string $uuidColumnName = '__uuid__'): void
     {
         $this->write('Migrating ' . $tableName . '.id to UUIDs...');
         $this->prepare($tableName);
-        $this->addUuidFields($tmpUuidField);
-        $this->generateUuidsToReplaceIds($tmpUuidField);
+        $this->addUuidFields($uuidColumnName);
+        $this->generateUuidsToReplaceIds($uuidColumnName);
         $this->addThoseUuidsToTablesWithFK();
         $this->deletePreviousFKs();
         $this->renameNewFKsToPreviousNames();
-        $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey($tmpUuidField);
+        $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey($uuidColumnName);
         $this->restoreConstraintsAndIndexes();
         $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
@@ -111,10 +111,10 @@ class PostgresIdToUuidMigration extends AbstractMigration
         $this->write('-> 0 foreign key detected.');
     }
 
-    private function addUuidFields(string $tmpUuidField): void
+    private function addUuidFields(string $uuidColumnName): void
     {
-        $this->connection->executeQuery("ALTER TABLE {$this->table} ADD $tmpUuidField UUID DEFAULT NULL");
-        $this->connection->executeQuery("COMMENT ON COLUMN {$this->table}.$tmpUuidField IS '(DC2Type:uuid)'");
+        $this->connection->executeQuery("ALTER TABLE {$this->table} ADD $uuidColumnName UUID DEFAULT NULL");
+        $this->connection->executeQuery("COMMENT ON COLUMN {$this->table}.$uuidColumnName IS '(DC2Type:uuid)'");
 
         foreach ($this->fks as $fk) {
             $fkTable = $fk['table'];
@@ -124,7 +124,7 @@ class PostgresIdToUuidMigration extends AbstractMigration
         }
     }
 
-    private function generateUuidsToReplaceIds(string $tmpUuidField): void
+    private function generateUuidsToReplaceIds(string $uuidColumnName): void
     {
         if (!class_exists('Ramsey\Uuid\Uuid')) {
             throw new \Exception('Ramsey\Uuid is required');
@@ -136,7 +136,7 @@ class PostgresIdToUuidMigration extends AbstractMigration
                 $id = $fetch['id'];
                 $uuid = Uuid::uuid4()->toString();
                 $this->idToUuidMap[$id] = $uuid;
-                $this->connection->update($this->table, [$tmpUuidField => $uuid], ['id' => $id]);
+                $this->connection->update($this->table, [$uuidColumnName => $uuid], ['id' => $id]);
             }
         }
     }
@@ -197,7 +197,7 @@ class PostgresIdToUuidMigration extends AbstractMigration
         }
     }
 
-    private function dropIdPrimaryKeyAndSetUuidToPrimaryKey(string $tmpUuidField): void
+    private function dropIdPrimaryKeyAndSetUuidToPrimaryKey(string $uuidColumnName): void
     {
         $this->write('-> Creating the uuid primary key...');
 
@@ -209,7 +209,7 @@ class PostgresIdToUuidMigration extends AbstractMigration
         $this->connection->executeQuery("ALTER TABLE {$this->table} DROP COLUMN id");
         $this->connection->executeQuery('DROP SEQUENCE IF EXISTS ' . $this->pk['sequence']);
 
-        $this->connection->executeQuery("ALTER TABLE {$this->table} RENAME COLUMN $tmpUuidField TO id");
+        $this->connection->executeQuery("ALTER TABLE {$this->table} RENAME COLUMN $uuidColumnName TO id");
         $this->connection->executeQuery("ALTER TABLE {$this->table} ALTER COLUMN id SET NOT NULL");
         $this->connection->executeQuery("ALTER TABLE {$this->table} ADD CONSTRAINT {$pkName} PRIMARY KEY ({$pkIds})");
     }
