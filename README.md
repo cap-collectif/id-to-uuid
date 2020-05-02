@@ -52,6 +52,8 @@ class VersionXYZ extends IdToUuidMigration //or PostgresIdToUuidMigration
 }
 ```
 
+Alternatively you can specify second parameter to `migrate` method - custom temporary uuid field name
+
 3. After migration
 
 Check if your db structure is different from the doctrine schema. If it does then create another migration or merge with the previous one.

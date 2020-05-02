@@ -37,16 +37,16 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
     {
     }
 
-    public function migrate(string $tableName)
+    public function migrate(string $tableName, string $tmpUuidField = '__uuid__')
     {
         $this->write('Migrating ' . $tableName . '.id to UUIDs...');
         $this->prepare($tableName);
-        $this->addUuidFields();
-        $this->generateUuidsToReplaceIds();
+        $this->addUuidFields($tmpUuidField);
+        $this->generateUuidsToReplaceIds($tmpUuidField);
         $this->addThoseUuidsToTablesWithFK();
         $this->deletePreviousFKs();
         $this->renameNewFKsToPreviousNames();
-        $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey();
+        $this->dropIdPrimaryKeyAndSetUuidToPrimaryKey($tmpUuidField);
         $this->restoreConstraintsAndIndexes();
         $this->write('Successfully migrated ' . $tableName . '.id to UUIDs!');
     }
@@ -102,15 +102,15 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         $this->write('-> 0 foreign key detected.');
     }
 
-    private function addUuidFields()
+    private function addUuidFields(string $tmpUuidField)
     {
-        $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' ADD uuid CHAR(36) COMMENT \'(DC2Type:guid)\' FIRST');
+        $this->connection->executeQuery('ALTER TABLE ' . $this->table . " ADD $tmpUuidField CHAR(36) COMMENT '(DC2Type:guid)' FIRST");
         foreach ($this->fks as $fk) {
             $this->connection->executeQuery('ALTER TABLE ' . $fk['table'] . ' ADD ' . $fk['tmpKey'] . ' CHAR(36) COMMENT \'(DC2Type:guid)\'');
         }
     }
 
-    private function generateUuidsToReplaceIds()
+    private function generateUuidsToReplaceIds(string $tmpUuidField)
     {
         $fetchs = $this->connection->fetchAll('SELECT id from ' . $this->table);
         if (count($fetchs) > 0) {
@@ -119,7 +119,7 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
                 $id = $fetch['id'];
                 $uuid = $this->generator->generate($this->em, null);
                 $this->idToUuidMap[$id] = $uuid;
-                $this->connection->update($this->table, ['uuid' => $uuid], ['id' => $id]);
+                $this->connection->update($this->table, [$tmpUuidField => $uuid], ['id' => $id]);
             }
         }
     }
@@ -177,11 +177,11 @@ class IdToUuidMigration extends AbstractMigration implements ContainerAwareInter
         }
     }
 
-    private function dropIdPrimaryKeyAndSetUuidToPrimaryKey()
+    private function dropIdPrimaryKeyAndSetUuidToPrimaryKey(string $tmpUuidField)
     {
         $this->write('-> Creating the uuid primary key...');
         $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' DROP PRIMARY KEY, DROP COLUMN id');
-        $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' CHANGE uuid id CHAR(36) NOT NULL COMMENT \'(DC2Type:guid)\'');
+        $this->connection->executeQuery('ALTER TABLE ' . $this->table . " CHANGE $tmpUuidField id CHAR(36) NOT NULL COMMENT '(DC2Type:guid)'");
         $this->connection->executeQuery('ALTER TABLE ' . $this->table . ' ADD PRIMARY KEY (id)');
     }
 
